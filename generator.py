@@ -48,7 +48,7 @@ def condition_embedded_generator(z_g, target_labels, z_g_dim, n_classes, nf_init
 
 
 def conditioned_generator(z_g, target_labels, nf_init, n_stages,
-                                     name='generator'):
+                          name='generator'):
     '''
 
     :param z_g: batch of random vector of size batch_size x z_g_dim
@@ -87,16 +87,17 @@ def conditioned_generator(z_g, target_labels, nf_init, n_stages,
 
 
 def conditional_instance_normalized_generator(z_g, target_labels, n_classes, nf_init, n_stages,
-                                              name='generator_cin',is_training=True):
+                                              name='generator_cin', is_training=True):
     '''
-
-    :param z_g:
-    :param target_labels:
-    :param n_classes:
-    :param nf_init:
-    :param n_stages:
-    :param name:
-    :param is_training:
+    Generator based on Resnet-architecture, with conditional instance norm in resnet blocks: Learns a mapping from an input
+    tensor thats sampled from a normal distribution to an image that shows the label depicted by the target labels vector
+    :param z_g: random sampled input noise tensor of shape (batch_size, noise_dim)
+    :param target_labels: 2D integer tensor of shape (batch_size,)
+    :param n_classes: scalar depticting the actual number of classes
+    :param nf_init: number of filters in last generator layer before final convolution to 3 image channels is performed
+    :param n_stages: number of consequetivly stacked Resnet Blocks
+    :param name: depicting the name of the scope which all generator ops are placed in
+    :param is_training: flag depticing if generator is in training or inference mode (required for conditional instance norm)
     :return:
     '''
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
@@ -105,13 +106,15 @@ def conditional_instance_normalized_generator(z_g, target_labels, n_classes, nf_
 
         # First resnet block preserves depth
         x = ops.resnet_block_cin(x, target_labels, nf_init * (2 ** (n_stages - 1)), nf_init * (2 ** (n_stages - 1)),
-                             nf_init * (2 ** (n_stages - 1)), n_classes ,'g_rnb_1',is_training)
+                                 nf_init * (2 ** (n_stages - 1)), n_classes, 'g_rnb_1', is_training)
         x = ops.upsample(x, name='g_upsample_1')  # 8x8 spatial dim
 
         for i in range(n_stages - 1):
             # Resnet Blocks and upsampling
-            x = ops.resnet_block_cin(x,target_labels, nf_init * (2 ** (n_stages - i - 1)), nf_init * (2 ** (n_stages - i - 2)),
-                                 nf_init * (2 ** (n_stages - i - 2)), n_classes ,'g_rnb_{}'.format(2 + i), is_training)
+            x = ops.resnet_block_cin(x, target_labels, nf_init * (2 ** (n_stages - i - 1)),
+                                     nf_init * (2 ** (n_stages - i - 2)),
+                                     nf_init * (2 ** (n_stages - i - 2)), n_classes, 'g_rnb_{}'.format(2 + i),
+                                     is_training)
             x = ops.upsample(x, name='g_upsample_{}'.format(2 + i))
 
         # Last convolution to output image
@@ -121,4 +124,3 @@ def conditional_instance_normalized_generator(z_g, target_labels, n_classes, nf_
         x = tf.nn.tanh(x, name='g_final_act')
 
         return x
-

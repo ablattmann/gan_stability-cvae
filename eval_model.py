@@ -41,7 +41,7 @@ def _run_inception(images, output_tensors):
 
 class Evaluator:
 
-    def __init__(self, model, config, device, logdir, latent_dim = None):
+    def __init__(self, model, config, device, logdir, latent_dim=None):
         '''
         Evaluator class is for computing scores and saving checkpoints, if new score falls below old score
         :param generator: the generator function
@@ -67,7 +67,7 @@ class Evaluator:
         self.fid = tf.get_variable('best_fid', shape=(), dtype=tf.float32,
                                    initializer=tf.initializers.constant(100000))
 
-        #define the latent dimension, if the generator is from cvaegan
+        # define the latent dimension, if the generator is from cvaegan
         self.latent_dim = latent_dim
 
     def _save(self, fid):
@@ -191,16 +191,16 @@ class Evaluator:
                                              summary_op=[inception_proto, fid_proto])
 
 
-def eval_cvae(decoder, device, config, logdir,latent_dim):
+def eval_cvae(decoder, device, config, logdir, latent_dim):
     '''
     This function evaluates a generator of a cvae with gaussian noise input instead of the latent code which is
     ectracted by the encoder network during trainig
-    :param decoder:
-    :param device:
-    :param config:
-    :param logdir:
-    :param latent_dim:
-    :return:
+    :param decoder: the decoder of the cvae
+    :param device: device to place the operations to
+    :param config: Flags defined in caller script
+    :param logdir: directory to write the event file to
+    :param latent_dim: dimension of the latent code
+    :return: A tf.train.SummaryHook, that adds the generated images to the summaries
     '''
     with tf.device(device):
 

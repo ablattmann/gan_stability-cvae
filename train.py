@@ -17,7 +17,6 @@ gfile = tf.gfile
 
 train_dir = os.path.dirname(os.path.realpath(__file__))
 
-
 flags.DEFINE_string('checkpoint_dir', os.path.join(train_dir, '../../data/wiki-art/vdbgan/checkpoints'),
                     'Directory, where the data to feed is located.')
 flags.DEFINE_integer('batch_size', 32, 'The batch_size for the model.')
@@ -33,12 +32,13 @@ flags.DEFINE_integer('g_step', 1, 'Number of generator steps to take per iterati
 flags.DEFINE_integer('n_steps', 3000000, 'The total number of train steps to take (reference is always generator).')
 flags.DEFINE_bool('load_model', False, 'Whether to load from existing weights or train new from scratch.')
 
-
-
 FLAGS = flags.FLAGS
 
 
 def main(_):
+    '''
+    Main training routine
+    '''
     print('d_learning_rate', FLAGS.d_learning_rate)
     print('g_learning_rate', FLAGS.g_learning_rate)
     print('data_dir', FLAGS.data_dir)
@@ -47,7 +47,6 @@ def main(_):
     print('Use conditional imstance normalization? ', FLAGS.use_cin)
     print('Starting the program..')
     gfile.MakeDirs(FLAGS.checkpoint_dir)
-
 
     if FLAGS.load_model:
         model_dir = 'vdbgan_wiki-art_32_128_2019-01-10-08-12-44'
@@ -83,7 +82,7 @@ def main(_):
         # instantiate model and build graph
         vdbgan = VDBGAN(zs, global_step, FLAGS, device=device)
 
-        evaluator = Evaluator(vdbgan.gen_fcn,FLAGS,device,logdir)
+        evaluator = Evaluator(vdbgan.gen_fcn, FLAGS, device, logdir)
 
         train_ops = tfgan.GANTrainOps(
             generator_train_op=vdbgan.g_optim,
@@ -104,7 +103,7 @@ def main(_):
             get_hooks_fn=tfgan.get_sequential_train_hooks(
                 train_steps=train_steps),
             hooks=
-            [tf.train.StopAtStepHook(num_steps=FLAGS.n_steps),evaluator.compute_stats()],
+            [tf.train.StopAtStepHook(num_steps=FLAGS.n_steps), evaluator.compute_stats()],
             logdir=logdir,
             save_summaries_steps=FLAGS.save_summaries_steps,
             save_checkpoint_secs=FLAGS.save_checkpoint_secs,

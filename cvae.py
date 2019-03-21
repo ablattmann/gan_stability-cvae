@@ -28,7 +28,7 @@ flags.DEFINE_integer('n_classes', 14, 'Number of classes that are present in the
 flags.DEFINE_integer('dataset_size', 80000, 'Number of training exmaples in the dataset.')
 flags.DEFINE_bool('use_cin', False,
                   'Whether to use conditional_instane_normalization for the generator or not.')
-flags.DEFINE_float('kl_weight',10.0,'Weighting factor for Kullback-Leibler-Loss.')
+flags.DEFINE_float('kl_weight', 10.0, 'Weighting factor for Kullback-Leibler-Loss.')
 
 FLAGS = flags.FLAGS
 
@@ -84,9 +84,9 @@ class CVAE:
 
         with tf.device(self.device):
             # define optimizer that's to be applied
-            self.optimizer = tf.train.AdamOptimizer(self.learning_rate, self.optimizer_add,name='Adam_optimizer')
+            self.optimizer = tf.train.AdamOptimizer(self.learning_rate, self.optimizer_add, name='Adam_optimizer')
 
-            self.increment_global_step = tf.assign_add(self.global_step,1,name='incr_global_stepb')
+            self.increment_global_step = tf.assign_add(self.global_step, 1, name='incr_global_stepb')
 
             # add image feed ops
             self.batches = utils.get_wikiart_batches(FLAGS.data_dir, self.config.batch_size, FLAGS.image_size,
@@ -124,16 +124,13 @@ class CVAE:
             # apply encoder function on the images
             latent_code, mus, sigmas = self.enc_fcn(images, sparse_class, self.n_classes, self.ef_dim, self.n_stages)
 
-
             if FLAGS.use_cin:
                 self.dec_fcn = gen_modules.conditional_instance_normalized_generator
-                restored = self.dec_fcn(latent_code,sparse_class,self.n_classes,self.gf_dim,self.n_stages)
+                restored = self.dec_fcn(latent_code, sparse_class, self.n_classes, self.gf_dim, self.n_stages)
             else:
                 self.dec_fcn = gen_modules.condition_embedded_generator
                 restored = self.dec_fcn(latent_code, sparse_class, self.z_g_dim, self.n_classes, self.gf_dim,
                                         self.n_stages)
-
-
 
             # decode and try to reconstruct conditional image; Note that, due to tanh-activation, the
             # restored images are in between -1 and 1, so it is required to transform the pixel-intensities
@@ -148,7 +145,6 @@ class CVAE:
                                                    grid_shape=utils.squarest_grid_size(self.config.batch_size),
                                                    image_shape=(self.image_size, self.image_size)))
 
-
             # compute partial losses
             kullback_leibler_loss = _kullback_leibler_loss(mus, sigmas)
             reconstruction_loss = _reconstruction_loss(images, restored)
@@ -157,7 +153,7 @@ class CVAE:
             loss = kl_weight * kullback_leibler_loss + reconstruction_loss
 
             # summaries
-            tf.summary.scalar('overall_loss',loss)
+            tf.summary.scalar('overall_loss', loss)
             tf.summary.scalar('reconstruction_loss', reconstruction_loss)
             tf.summary.scalar('kullback_leibler_loss', kullback_leibler_loss)
 
@@ -168,12 +164,7 @@ class CVAE:
             print('Current model has {} parameters that are optimized during training'.format(n_params))
 
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            print('Number of update ops: ',len(update_ops))
+            print('Number of update ops: ', len(update_ops))
 
             with tf.control_dependencies(update_ops):
-                self.train_op = tf.contrib.training.create_train_op(loss,self.optimizer)
-
-
-
-
-
+                self.train_op = tf.contrib.training.create_train_op(loss, self.optimizer)

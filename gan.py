@@ -138,8 +138,10 @@ class VDBGAN:
             # define beta
             self.beta = tf.get_variable('beta', trainable=False, initializer=tf.zeros_initializer(), shape=())
 
-            self.g_opt = tf.train.RMSPropOptimizer(self.g_learning_rate, FLAGS.gd_gamma, name='g_optimizer',epsilon=1e-8)
-            self.d_opt = tf.train.RMSPropOptimizer(self.d_learning_rate, FLAGS.gd_gamma, name='d_optimizer',epsilon=1e-8)
+            self.g_opt = tf.train.RMSPropOptimizer(self.g_learning_rate, FLAGS.gd_gamma, name='g_optimizer',
+                                                   epsilon=1e-8)
+            self.d_opt = tf.train.RMSPropOptimizer(self.d_learning_rate, FLAGS.gd_gamma, name='d_optimizer',
+                                                   epsilon=1e-8)
 
             # Increment global step
             self.increment_global_step = tf.assign_add(self.global_step, 1)
@@ -198,7 +200,6 @@ class VDBGAN:
                                                                                        FLAGS.n_classes,
                                                                                        FLAGS.df_dim, FLAGS.n_stages)
 
-            # for test purposes: what happens if generator is apllied on 'common' discriminator version
             disc_on_gen_logits, disc_on_gen_mus, disc_on_gen_sigmas, disc_on_gen_mu_activations = self.disc_fcn(
                 generator, gen_sparse_indices,
                 FLAGS.n_classes,
@@ -229,7 +230,7 @@ class VDBGAN:
                 gamma_gp = FLAGS.gp_gamma
                 gradient_penalty = _gradient_penalty(disc_on_data_logits, images, gamma_gp)
                 disc_loss = 0.5 * (
-                            loss_disc_on_gen + loss_disc_on_real) + self.beta * bottleneck_loss + gradient_penalty
+                        loss_disc_on_gen + loss_disc_on_real) + self.beta * bottleneck_loss + gradient_penalty
 
                 # add summary for gradient penalty
                 tf.summary.scalar('gradient_penalty', gradient_penalty)
@@ -292,11 +293,11 @@ class VDBGAN:
                 # if conditional instance norm is used; else, this statement will have no effect)
                 self.g_optim = self.g_opt.apply_gradients(g_grads)
 
-
             with tf.control_dependencies([self.d_optim]):
                 # update beta
-                update_beta = tf.assign(self.beta,tf.maximum(tf.constant(0, dtype=tf.float32),
-                                       self.beta + self.beta_step_size * bottleneck_loss),name='update_beta')
+                update_beta = tf.assign(self.beta, tf.maximum(tf.constant(0, dtype=tf.float32),
+                                                              self.beta + self.beta_step_size * bottleneck_loss),
+                                        name='update_beta')
 
             # log beta
             tf.summary.scalar('optimized_bottleneck_loss_weight', update_beta)

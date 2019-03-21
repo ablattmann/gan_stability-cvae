@@ -2,6 +2,12 @@ import tensorflow as tf
 
 
 def upsample(x, name=None):
+    '''
+    Upsampmling of batch of images/feature maps by factor 2 using nearest neighbour interpolation
+    :param x: input 4D tensor (batch_size, height, width, channels)
+    :param name: optional name for the operation
+    :return:
+    '''
     _, nh, nw, nx = x.get_shape().as_list()
     x = tf.image.resize_nearest_neighbor(x, [nh * 2, nw * 2], name=name)
     return x
@@ -9,10 +15,13 @@ def upsample(x, name=None):
 
 def resnet_block(input_, fin, fhidden, fout, name='rnb', actfcn=tf.nn.leaky_relu):
     '''
-
-    :param fin:
-    :param fhidden:
-    :param fout:
+    Common Resnet Block without any normalization
+    :param input: 4D tensor (batch_size, height, width, channels)
+    :param fin: number channels of input
+    :param fhidden: number of channels after first convolution
+    :param fout: number of channels of outputs
+    :param name: name of the scope, the operations shall be placed in
+    :param actfcn: the activation function to be used
     :return:
     '''
     with tf.variable_scope(name):
@@ -28,16 +37,16 @@ def resnet_block(input_, fin, fhidden, fout, name='rnb', actfcn=tf.nn.leaky_relu
 def resnet_block_cin(input_, labels, fin, fhidden, fout, n_classes, name='rnb_cin', is_training=True,
                      actfcn=tf.nn.leaky_relu):
     '''
-    This function implements a resnet block with conditional instance normalization
-    :param input:
-    :param labels:
-    :param fin:
-    :param fhidden:
-    :param fout:
-    :param n_classes:
-    :param name:
-    :param is_training:
-    :param actfcn:
+    This function implements a resnet block with instead of common batch normalization conditional instance normalization
+    :param input: 4D tensor (batch_size, height, width, channels)
+    :param labels: 1D tensor (batch_size,) that depticts the labels for the batch of imputs
+    :param fin: number channels of input
+    :param fhidden: number of channels after first convolution
+    :param fout: number of channels of outputs
+    :param n_classes: integer depicting the number of classes, that are considered for the current model
+    :param name: name of the scope, the operations shall be placed in
+    :param is_training: flag, depticing if net is trained or not (needed for conditional instance normalization)
+    :param actfcn: the activation function to be used
     :return:
     '''
     with tf.variable_scope(name):
@@ -56,19 +65,18 @@ def resnet_block_cin(input_, labels, fin, fhidden, fout, n_classes, name='rnb_ci
 
 def conv2d(input_, output_dim,
            k_h=3, k_w=3, d_h=2, d_w=2, name='conv2d', preserve_size=True):
-    """Creates convolutional layers which use xavier initializer.
-    Args:
-      input_: 4D input tensor (batch size, height, width, channel).
-      output_dim: Number of features in the output layer.
-      k_h: The height of the convolutional kernel.
-      k_w: The width of the convolutional kernel.
-      d_h: The height stride of the convolutional kernel.
-      d_w: The width stride of the convolutional kernel.
-      name: The name of the variable scope.
-      preserve_size: whether to preserve spatial size of filter kernel
-    Returns:
-      conv: The normalized tensor.
-    """
+    '''
+    Creates convolutional layers which use xavier initializer.
+    :param input_: 4D input tensor (batch size, height, width, channel).
+    :param output_dim: Number of features in the output layer.
+    :param k_h: The height of the convolutional kernel.
+    :param k_w: The width of the convolutional kernel.
+    :param d_h: The height stride of the convolutional kernel.
+    :param d_w: The width stride of the convolutional kernel.
+    :param name: The name of the variable scope.
+    :param preserve_size: whether to preserve spatial size of filter kernel
+    :return:
+    '''
     with tf.variable_scope(name):
         if (preserve_size):
             pad = 'SAME'
@@ -89,20 +97,19 @@ def conv2d(input_, output_dim,
 def deconv2d(input_, output_shape,
              k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
              name='deconv2d', init_bias=0.):
-    """Creates deconvolutional layers.
-    Args:
-      input_: 4D input tensor (batch size, height, width, channel).
-      output_shape: Number of features in the output layer.
-      k_h: The height of the convolutional kernel.
-      k_w: The width of the convolutional kernel.
-      d_h: The height stride of the convolutional kernel.
-      d_w: The width stride of the convolutional kernel.
-      stddev: The standard deviation for weights initializer.
-      name: The name of the variable scope.
-      init_bias: The initial bias for the layer.
-    Returns:
-      conv: The normalized tensor.
-    """
+    '''
+    Creates deconvolutional layers.
+    :param input_: 4D input tensor (batch size, height, width, channel).
+    :param output_shape: Number of features in the output layer.
+    :param k_h: The height of the convolutional kernel.
+    :param k_w: The width of the convolutional kernel.
+    :param d_h: The height stride of the convolutional kernel.
+    :param d_w: The width stride of the convolutional kernel.
+    :param stddev: The standard deviation for weights initializer.
+    :param name: The name of the variable scope.
+    :param init_bias: The initial bias for the layer.
+    return:
+    '''
     with tf.variable_scope(name):
         w = tf.get_variable('w',
                             [k_h, k_w, output_shape[-1], input_.get_shape()[-1]],
@@ -118,14 +125,13 @@ def deconv2d(input_, output_shape,
 
 
 def linear(x, output_size, scope=None, bias_zero=True):
-    """Creates a linear layer.
-    Args:
-      x: 2D input tensor (batch size, features)
-      output_size: Number of features in the output layer
-      scope: Optional, variable scope to put the layer's parameters into
-    Returns:
-      The normalized tensor
-    """
+    '''
+    Creates a linear layer.
+    :param x: 2D input tensor (batch size, features)
+    :param output_size: Number of features in the output layer
+    :param scope: Optional, variable scope to put the layer's parameters into
+    return:
+    '''
     shape = x.get_shape().as_list()
 
     with tf.variable_scope(scope or 'Linear'):
@@ -143,7 +149,6 @@ def linear(x, output_size, scope=None, bias_zero=True):
 
 
 def lrelu(x, leak=0.2, name='lrelu'):
-    """The leaky RELU operation."""
     with tf.variable_scope(name):
         f1 = 0.5 * (1 + leak)
         f2 = 0.5 * (1 - leak)
@@ -151,6 +156,14 @@ def lrelu(x, leak=0.2, name='lrelu'):
 
 
 def embedding(x, input_size, embed_size, name='embedding'):
+    '''
+    Creates an embedding layer
+    :param x:
+    :param input_size:
+    :param embed_size:
+    :param name:
+    :return:
+    '''
     with tf.variable_scope(name):
         # Create lookup table
         embedding_map = tf.get_variable(shape=[input_size, embed_size], name='embedding_map',
@@ -162,31 +175,26 @@ def embedding(x, input_size, embed_size, name='embedding'):
 
 class ConditionalInstanceNorm(object):
 
-    def __init__(self, n_classes, name='conditional_instance_norm', moving_average=0.99, scale=True, shift=True,
-                 labels_one_hot=False):
+    def __init__(self, n_classes, name='conditional_instance_norm', moving_average=0.99):
         '''
-
-        :param n_classes:
-        :param name:
-        :param moving_average:
-        :param scale:
-        :param shift:
+        Conditional instance normalization
+        :param n_classes: integer number depicting the number of classes for the current model
+        :param name: name of the scope which to operations of this layer shall be placed in
+        :param moving_average: floating point number in between 0 and 1 depicting the weight for the old value while performing the
+        mean and average update
         '''
         self.name = name
         with tf.variable_scope(self.name):
             self.n_classes = n_classes
             self.moving_average = moving_average
-            self.scale = scale
-            self.shift = shift
-            self.labels_one_hot = labels_one_hot
 
     def __call__(self, input, labels, is_training):
         '''
-
-        :param input:
-        :param labels:
-        :param is_training:
-        :return:
+        Calls the conditional instance normalization layer, i.e. applies them to an input tensor
+        :param input: 4D tensor (batch_size, height, width, channels)
+        :param labels: 1D tensor (batch_size,) depticting the label for the batch of inputs
+        :param is_training: flag, depicting whether the net is being trained or not
+        :return: the normalized input, dependig on the labels
         '''
         # define the shape of the learned weighting matrices betaand gamma
         trainable_shape = tf.TensorShape([self.n_classes, input.get_shape()[-1]])
@@ -208,9 +216,6 @@ class ConditionalInstanceNorm(object):
                                                 initializer=tf.ones_initializer(), trainable=False)
 
             # operations needed for the training or update
-            # if(self.labels_one_hot):
-            #     beta = tf.gather_nd()
-            # else:
             beta = tf.gather(self.beta, labels)
             beta = tf.expand_dims(tf.expand_dims(beta, 1), 1)
 

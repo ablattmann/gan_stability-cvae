@@ -18,13 +18,12 @@ def prod(iterable):
     return functools.reduce(operator.mul,iterable,1)
 
 def make_z_normal(batch_size, z_dim, name=None):
-    """Make random noises tensors with normal distribution  feeding into the generator
-    Args:
-      batch_size: the batch_size for z
-      z_dim: The dimension of the z (noise) vector.
-    Returns:
-      zs:  noise tensors.
-    """
+    '''
+    Make random noises tensors with normal distribution  feeding into the generator
+    :param batch_size: the batch_size for z
+    :param z_dim: The dimension of the z (noise) vector.
+    :return:
+    '''
     shape = [batch_size, z_dim]
     z = tf.random_normal(shape, name=name, dtype=tf.float32)
     return z
@@ -34,16 +33,17 @@ def get_wikiart_batches(data_dir,
                         batch_size,
                         image_size,
                         shuffle_buffer_size=70000):
-    """Fetches batches of size batch_size from the data_dir.
-    Args:
-      data_dir: The directory to read data from. Expected to be a single
-          TFRecords file.
-      batch_size: The number of elements in a single minibatch.
-      shuffle_buffer_size: The number of records to load before shuffling. Larger
-          means more likely randomization. (Default: 100000)
-    Returns:
-       An image batch with related labels
-    """
+    '''
+    Fetches data from a tf_records-file
+    :param data_dir:  the path of the directory, the data file is placed in
+    :param batch_size: batch size for the given model
+    :param image_size: integer depicting the height and width of the images in the
+    dataset (net is trained on images of equal height and width)
+    :param shuffle_buffer_size: Number of elements to prefetch; IMPORTANT: Consider available RAM on training machine. Too
+    large buffer sizes will cause the RAM to overflow; Nevertheless, choose this parameter the biggest possible.
+    :return: A tuple, containing a 4D tensor, a batch of color images (batch_size, height, width, 3)
+    (normalized in between -1 and 1) and their labels as a 1D tensor of integers
+    '''
     filenames = tf.data.Dataset.list_files(os.path.join(data_dir, 'wiki-art.tfrecords'))
     dataset = tf.data.TFRecordDataset(filenames)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(shuffle_buffer_size))
@@ -106,6 +106,11 @@ def checkID(id, length):
 
 
 def choose_gpu():
+    '''
+    Searches for available GPU devices and automatically chooses the one with the most memory available;
+    asks the user via command line which GPU to choose, if none available
+    :return: The GPU index of the GPU to be used
+    '''
     os.system('nvidia-smi -q -d Memory |grep -A4 GPU|grep Free >tmp')
     memory_available = [int(x.split()[2]) for x in open('tmp', 'r').readlines()]
     os.system('nvidia-smi -q | grep Processes > tmp')
